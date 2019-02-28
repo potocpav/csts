@@ -2,6 +2,7 @@
 from bs4 import BeautifulSoup
 import requests
 import json
+import os
 
 
 def get_content(webpage):
@@ -10,22 +11,27 @@ def get_content(webpage):
     return content
 
 # url = 'http://www.csts.cz/cs/VysledkySoutezi/Souteze?rok=2018&mesic=01'
-r = requests.get(url, timeout=0.5)
-str(get_content(r.text))
+# r = requests.get(url, timeout=0.5)
+# str(get_content(r.text))
 
 results = json.load(open('data/vysledky.json', 'r'))
 ids = [int(c['couple_id']) for r in results.values() for c in r['results']]
 
-for par_id in ids:
-    if (y, m) in comps.keys(): continue
-    if par_id % 100 == 0:
-        print(f'getting couple {par_id}..')
+for par_id in ids[:2000]:
     url = f'http://www.csts.cz/cs/VysledkySoutezi/Par/{par_id}'
+    if par_id % 100 == 0 or True:
+        print(f'getting couple info from "{url}"..')
+
+    dir = os.path.join("data", "pary", "{:06d}".format(par_id // 1000 * 1000))
+    fil = os.path.join(dir, "{:06d}.html".format(par_id))
+    if os.path.isfile(fil):
+        continue
+
 
     for _ in range(10):
         try:
             r = requests.get(url, timeout=0.5)
-        except (requests.ConnectTimeout, requests.ReadTimeout):
+        except (requests.ConnectTimeout, requests.ReadTimeout, requests.ConnectionError):
             print(f'server couldn\'t be reached.')
         else:
             break
@@ -37,3 +43,7 @@ for par_id in ids:
     content = get_content(data)
 
     # TODO: save to a file, if it doesn't exist yet.
+
+    os.makedirs(dir, exist_ok=True)
+    with open(fil, 'w') as f:
+        f.write(str(content))
