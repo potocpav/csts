@@ -17,20 +17,20 @@ def get_content(webpage):
 results = json.load(open('data/vysledky.json', 'r'))
 ids = [int(c['couple_id']) for r in results.values() for c in r['results']]
 
-for par_id in ids[:2000]:
+for par_id in ids:
     url = f'http://www.csts.cz/cs/VysledkySoutezi/Par/{par_id}'
-    if par_id % 100 == 0 or True:
-        print(f'getting couple info from "{url}"..')
 
     dir = os.path.join("data", "pary", "{:06d}".format(par_id // 1000 * 1000))
     fil = os.path.join(dir, "{:06d}.html".format(par_id))
     if os.path.isfile(fil):
         continue
 
+    if par_id % 10 == 0:
+        print(f'getting couple info from "{url}"..')
 
     for _ in range(10):
         try:
-            r = requests.get(url, timeout=0.5)
+            r = requests.get(url, timeout=1.0)
         except (requests.ConnectTimeout, requests.ReadTimeout, requests.ConnectionError):
             print(f'server couldn\'t be reached.')
         else:
